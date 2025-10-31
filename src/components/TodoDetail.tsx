@@ -1,17 +1,26 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { Link, useLoaderData, Form } from 'react-router';
+
+interface Todo {
+  _id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  file?: {
+    url: string;
+    originalName: string;
+  };
+}
+
+interface TodoDetailData {
+  data: Todo;
+}
 
 export default function TodoDetail() {
-  const { id } = useParams<{ id: string }>();
-  const [todo, setTodo] = useState<Array>([]);
+  const { data: todo } = useLoaderData() as TodoDetailData;
 
-  useEffect(() => {
-    fetch(`http://localhost:8080/todo/${id}`)
-      .then((res) => res.json())
-      .then((data) => setTodo(data.data));
-  }, [id]);
-
-  if (!todo) return <p>Loading...</p>;
+  if (!todo) {
+    return <p>Todo not found.</p>;
+  }
 
   return (
     <div className="p-4 border rounded-lg bg-white shadow-sm max-w-xl">
@@ -28,6 +37,28 @@ export default function TodoDetail() {
           {todo.file.originalName}
         </a>
       )}
+
+      <div className="flex gap-4 mt-6">
+        <Link
+          to={`/todos/${todo._id}/edit`}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Edit
+        </Link>
+        <Form
+          method="post"
+          action={`/todos/${todo._id}/delete`}
+          onSubmit={(e) => {
+            if (!window.confirm('Are you sure you want to delete this todo?')) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">
+            Delete
+          </button>
+        </Form>
+      </div>
     </div>
   );
 }

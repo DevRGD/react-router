@@ -1,17 +1,21 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
   withCredentials: true,
 });
 
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  async (error: AxiosError) => {
     const originalRequest = error.config;
+    if (!originalRequest || !error.response) {
+      return Promise.reject(error);
+    }
 
-    if (error.response.status === 401 && originalRequest.url !== '/auth/refresh' && !originalRequest._retry) {
-      originalRequest._retry = true;
+    const status = error.response.status;
+    if (status === 401 && originalRequest.url !== '/auth/refresh' && !(originalRequest as any)._retry) {
+      (originalRequest as any)._retry = true;
 
       try {
         await api.post('/auth/refresh');
@@ -19,10 +23,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.error('Session expired. Please log in again.');
         window.location.href = '/auth/login';
-        return Promise.reject(refreshError);
+        return new Promise(() => {});
       }
     }
-
     return Promise.reject(error);
   },
 );

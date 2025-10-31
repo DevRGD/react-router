@@ -1,14 +1,14 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import api from '../lib/api';
 
-interface User {
+export interface User {
   _id: string;
   name: string;
   email: string;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
@@ -18,28 +18,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export function AuthProvider({ children, initialUser }: { children: ReactNode; initialUser: User | null }) {
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!initialUser);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const response = await api.post('/auth/refresh');
-        setUser(response.data.data);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        setUser(null);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkAuthStatus();
-  }, []);
 
   const login = (userData: User) => {
     setUser(userData);

@@ -1,7 +1,6 @@
 import logo from '../assets/logo.svg';
-import { NavLink, Outlet } from 'react-router';
-import { useAuth } from '../context/AuthContext';
-import { AuthProvider } from '../context/AuthContext';
+import { NavLink, Outlet, useLoaderData, Form } from 'react-router';
+import { AuthProvider, type User, useAuth } from '../context/AuthContext';
 
 function AppRoot() {
   const { isAuthenticated, isLoading, logout } = useAuth();
@@ -13,10 +12,6 @@ function AppRoot() {
     { to: '/auth/login', label: 'Login', hideIfAuth: true },
     { to: '/auth/register', label: 'Register', hideIfAuth: true },
   ];
-
-  const handleLogout = async () => {
-    await logout();
-  };
 
   if (isLoading) {
     return (
@@ -43,7 +38,11 @@ function AppRoot() {
 
         <div className="flex gap-8 text-lg font-medium items-center">
           {navLinks
-            .filter((link) => !(link.auth && !isAuthenticated) && !(link.hideIfAuth && isAuthenticated))
+            .filter((link) => {
+              if (link.auth && !isAuthenticated) return false;
+              if (link.hideIfAuth && isAuthenticated) return false;
+              return true;
+            })
             .map(({ to, label }) => (
               <NavLink
                 key={to}
@@ -61,12 +60,20 @@ function AppRoot() {
             ))}
 
           {isAuthenticated && (
-            <button
-              onClick={handleLogout}
-              className="px-4 py-1.5 bg-red-600 text-white text-base rounded hover:bg-red-700 transition"
+            <Form
+              action="/logout"
+              method="post"
+              onSubmit={() => {
+                logout();
+              }}
             >
-              Logout
-            </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 bg-red-600 text-white text-base rounded hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
+            </Form>
           )}
         </div>
       </nav>
@@ -79,8 +86,10 @@ function AppRoot() {
 }
 
 export default function RootLayout() {
+  const initialUser = useLoaderData() as User | null;
+
   return (
-    <AuthProvider>
+    <AuthProvider initialUser={initialUser}>
       <AppRoot />
     </AuthProvider>
   );
