@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# Todo App Frontend (React & Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend web application for the Todo App, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+It's a modern, fast, and responsive Single-Page Application (SPA) that uses a data-driven approach to routing and data management, communicating with the secure Node.js backend.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Core Technology
 
-## React Compiler
+* **Framework:** React 19 & TypeScript
+* **Build Tool:** Vite
+* **Routing:** React Router v7 (Data-Driven)
+* **Styling:** TailwindCSS
+* **API Comms:** Axios
+* **State Management:** React Context (`AuthContext`) for global auth state
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Key Features & Architecture
 
-## Expanding the ESLint configuration
+This application is built around modern React Router v7 data-driven patterns, minimizing component-level state management for data fetching.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Data-Driven Routing
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Instead of using `useEffect` hooks for data, the app uses `loader` and `action` functions defined in `src/router.ts`.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+* **Loaders (`loader`):** Functions like `todoListLoader` and `todoDetailLoader` are responsible for fetching data for a route *before* it renders. This simplifies loading and error states.
+* **Actions (`action`):** Functions like `loginAction` and `todoCreateAction` handle all form submissions (`<Form>`). They perform the API mutation and redirect, keeping components clean and declarative.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Authentication Handling
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app provides a seamless and secure authentication experience.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1.  **Auth Context:** A global `AuthContext` provides the current user state (`isAuthenticated`, `user`) to all components.
+2.  **Initial Load:** The `rootLoader` in `router.ts` is called on app startup. It pings the backend's `/auth/refresh` endpoint to check if the user has a valid session.
+3.  **Automatic Refresh:** The `axios` instance in `lib/api.ts` includes an interceptor. If an API call fails with a 401 Unauthorized error, this interceptor automatically attempts to get a new `accessToken` using the `refreshToken` and then retries the original request.
+4.  **Protected Routes:** The `TodoLayout` component checks the `AuthContext` and automatically redirects unauthenticated users to the `/auth/login` page.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Getting Started
+
+1.  Clone the repository.
+2.  Run `npm install` (or `yarn install`).
+3.  Create a `.env.local` file in the root.
+4.  Add the backend API URL to the `.env.local` file:
+    ```
+    VITE_API_URL=http://localhost:8080
+    ```
+5.  Ensure the backend API server is running.
+6.  Run `npm run dev` to start the Vite development server.
